@@ -9,7 +9,8 @@ import (
 )
 
 type Client struct {
-	u *userInMemory
+	u  *userInMemory
+	ms *messagesInMemory
 }
 
 func NewClient() *Client {
@@ -17,11 +18,18 @@ func NewClient() *Client {
 		u: &userInMemory{
 			mtx: &sync.Mutex{},
 		},
+		ms: &messagesInMemory{
+			mtx: &sync.Mutex{},
+		},
 	}
 }
 
 func (c *Client) UserRepository() domain.UserRepository {
 	return c.u
+}
+
+func (c *Client) MessageRepository() domain.MessageRepository {
+	return c.ms
 }
 
 func generateID() string {
