@@ -44,7 +44,7 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		User func(childComplexity int) int
+		Me func(childComplexity int) int
 	}
 
 	User struct {
@@ -59,7 +59,7 @@ type MutationResolver interface {
 	Login(ctx context.Context, input LoginInput) (User, error)
 }
 type QueryResolver interface {
-	User(ctx context.Context) (*User, error)
+	Me(ctx context.Context) (*User, error)
 }
 
 func field_Mutation_register_args(rawArgs map[string]interface{}) (map[string]interface{}, error) {
@@ -174,12 +174,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.Login(childComplexity, args["input"].(LoginInput)), true
 
-	case "Query.user":
-		if e.complexity.Query.User == nil {
+	case "Query.me":
+		if e.complexity.Query.Me == nil {
 			break
 		}
 
-		return e.complexity.Query.User(childComplexity), true
+		return e.complexity.Query.Me(childComplexity), true
 
 	case "User.id":
 		if e.complexity.User.Id == nil {
@@ -217,9 +217,9 @@ func (e *executableSchema) Query(ctx context.Context, op *ast.OperationDefinitio
 	})
 
 	return &graphql.Response{
-		Data:       buf,
-		Errors:     ec.Errors,
-		Extensions: ec.Extensions}
+		Data:   buf,
+		Errors: ec.Errors,
+	}
 }
 
 func (e *executableSchema) Mutation(ctx context.Context, op *ast.OperationDefinition) *graphql.Response {
@@ -233,9 +233,8 @@ func (e *executableSchema) Mutation(ctx context.Context, op *ast.OperationDefini
 	})
 
 	return &graphql.Response{
-		Data:       buf,
-		Errors:     ec.Errors,
-		Extensions: ec.Extensions,
+		Data:   buf,
+		Errors: ec.Errors,
 	}
 }
 
@@ -364,10 +363,10 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Query")
-		case "user":
+		case "me":
 			wg.Add(1)
 			go func(i int, field graphql.CollectedField) {
-				out.Values[i] = ec._Query_user(ctx, field)
+				out.Values[i] = ec._Query_me(ctx, field)
 				wg.Done()
 			}(i, field)
 		case "__type":
@@ -386,7 +385,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 }
 
 // nolint: vetshadow
-func (ec *executionContext) _Query_user(ctx context.Context, field graphql.CollectedField) graphql.Marshaler {
+func (ec *executionContext) _Query_me(ctx context.Context, field graphql.CollectedField) graphql.Marshaler {
 	rctx := &graphql.ResolverContext{
 		Object: "Query",
 		Args:   nil,
@@ -394,7 +393,7 @@ func (ec *executionContext) _Query_user(ctx context.Context, field graphql.Colle
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	resTmp := ec.FieldMiddleware(ctx, nil, func(ctx context.Context) (interface{}, error) {
-		return ec.resolvers.Query().User(ctx)
+		return ec.resolvers.Query().Me(ctx)
 	})
 	if resTmp == nil {
 		return graphql.Null
@@ -1929,7 +1928,7 @@ type User {
 }
 
 type Query {
-  user: User
+  me: User
 }
 
 input NewUser {

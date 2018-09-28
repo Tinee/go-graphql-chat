@@ -27,6 +27,6 @@ type mutationResolver struct{ *Resolver }
 
 type queryResolver struct{ *Resolver }
 
-func (r *queryResolver) User(ctx context.Context) (*User, error) {
+func (r *queryResolver) Me(ctx context.Context) (*User, error) {
 	panic("not implemented")
 }
