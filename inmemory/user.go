@@ -3,6 +3,7 @@ package inmemory
 import (
 	"errors"
 	"sync"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 
@@ -29,6 +30,7 @@ func (uim *userInMemory) Create(u domain.User) (domain.User, error) {
 	// Adds data to the input user.
 	u.Password = string(bs)
 	u.ID = generateID()
+	u.CreatedAt = time.Now()
 
 	uim.mtx.Lock()
 	// if user exists bail.
