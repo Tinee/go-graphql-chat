@@ -2,7 +2,6 @@
 package graphql
 
 import (
-	context "context"
 	"sync"
 
 	graphql "github.com/99designs/gqlgen/graphql"
@@ -46,7 +45,3 @@ type subscriptionResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 
 type queryResolver struct{ *Resolver }
-
-func (r *queryResolver) Me(ctx context.Context) (Viewer, error) {
-	panic("not implemented")
-}
