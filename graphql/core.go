@@ -7,6 +7,7 @@ import (
 	context "context"
 	strconv "strconv"
 	sync "sync"
+	time "time"
 
 	graphql "github.com/99designs/gqlgen/graphql"
 	introspection "github.com/99designs/gqlgen/graphql/introspection"
@@ -38,16 +39,29 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	Chatroom struct {
+		Id       func(childComplexity int) int
+		Messages func(childComplexity int) int
+	}
+
+	Message struct {
+		Id        func(childComplexity int) int
+		Text      func(childComplexity int) int
+		CreatedBy func(childComplexity int) int
+		CreatedAt func(childComplexity int) int
+	}
+
 	Mutation struct {
-		Register func(childComplexity int, input NewUser) int
-		Login    func(childComplexity int, input LoginInput) int
+		Register    func(childComplexity int, input NewUser) int
+		Login       func(childComplexity int, input LoginInput) int
+		PostMessage func(childComplexity int, text string, username string, roomId string) int
 	}
 
 	Query struct {
 		Me func(childComplexity int) int
 	}
 
-	User struct {
+	Viewer struct {
 		Id       func(childComplexity int) int
 		Username func(childComplexity int) int
 		Token    func(childComplexity int) int
@@ -55,11 +69,12 @@ type ComplexityRoot struct {
 }
 
 type MutationResolver interface {
-	Register(ctx context.Context, input NewUser) (User, error)
-	Login(ctx context.Context, input LoginInput) (User, error)
+	Register(ctx context.Context, input NewUser) (Viewer, error)
+	Login(ctx context.Context, input LoginInput) (Viewer, error)
+	PostMessage(ctx context.Context, text string, username string, roomId string) (Message, error)
 }
 type QueryResolver interface {
-	Me(ctx context.Context) (*User, error)
+	Me(ctx context.Context) (Viewer, error)
 }
 
 func field_Mutation_register_args(rawArgs map[string]interface{}) (map[string]interface{}, error) {
@@ -88,6 +103,39 @@ func field_Mutation_login_args(rawArgs map[string]interface{}) (map[string]inter
 		}
 	}
 	args["input"] = arg0
+	return args, nil
+
+}
+
+func field_Mutation_postMessage_args(rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["text"]; ok {
+		var err error
+		arg0, err = graphql.UnmarshalString(tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["text"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["username"]; ok {
+		var err error
+		arg1, err = graphql.UnmarshalString(tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["username"] = arg1
+	var arg2 string
+	if tmp, ok := rawArgs["roomId"]; ok {
+		var err error
+		arg2, err = graphql.UnmarshalString(tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["roomId"] = arg2
 	return args, nil
 
 }
@@ -150,6 +198,48 @@ func (e *executableSchema) Schema() *ast.Schema {
 func (e *executableSchema) Complexity(typeName, field string, childComplexity int, rawArgs map[string]interface{}) (int, bool) {
 	switch typeName + "." + field {
 
+	case "Chatroom.id":
+		if e.complexity.Chatroom.Id == nil {
+			break
+		}
+
+		return e.complexity.Chatroom.Id(childComplexity), true
+
+	case "Chatroom.messages":
+		if e.complexity.Chatroom.Messages == nil {
+			break
+		}
+
+		return e.complexity.Chatroom.Messages(childComplexity), true
+
+	case "Message.id":
+		if e.complexity.Message.Id == nil {
+			break
+		}
+
+		return e.complexity.Message.Id(childComplexity), true
+
+	case "Message.text":
+		if e.complexity.Message.Text == nil {
+			break
+		}
+
+		return e.complexity.Message.Text(childComplexity), true
+
+	case "Message.createdBy":
+		if e.complexity.Message.CreatedBy == nil {
+			break
+		}
+
+		return e.complexity.Message.CreatedBy(childComplexity), true
+
+	case "Message.createdAt":
+		if e.complexity.Message.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.Message.CreatedAt(childComplexity), true
+
 	case "Mutation.register":
 		if e.complexity.Mutation.Register == nil {
 			break
@@ -174,6 +264,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.Login(childComplexity, args["input"].(LoginInput)), true
 
+	case "Mutation.postMessage":
+		if e.complexity.Mutation.PostMessage == nil {
+			break
+		}
+
+		args, err := field_Mutation_postMessage_args(rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.PostMessage(childComplexity, args["text"].(string), args["username"].(string), args["roomId"].(string)), true
+
 	case "Query.me":
 		if e.complexity.Query.Me == nil {
 			break
@@ -181,26 +283,26 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Me(childComplexity), true
 
-	case "User.id":
-		if e.complexity.User.Id == nil {
+	case "Viewer.id":
+		if e.complexity.Viewer.Id == nil {
 			break
 		}
 
-		return e.complexity.User.Id(childComplexity), true
+		return e.complexity.Viewer.Id(childComplexity), true
 
-	case "User.username":
-		if e.complexity.User.Username == nil {
+	case "Viewer.username":
+		if e.complexity.Viewer.Username == nil {
 			break
 		}
 
-		return e.complexity.User.Username(childComplexity), true
+		return e.complexity.Viewer.Username(childComplexity), true
 
-	case "User.token":
-		if e.complexity.User.Token == nil {
+	case "Viewer.token":
+		if e.complexity.Viewer.Token == nil {
 			break
 		}
 
-		return e.complexity.User.Token(childComplexity), true
+		return e.complexity.Viewer.Token(childComplexity), true
 
 	}
 	return 0, false
@@ -217,9 +319,9 @@ func (e *executableSchema) Query(ctx context.Context, op *ast.OperationDefinitio
 	})
 
 	return &graphql.Response{
-		Data:   buf,
-		Errors: ec.Errors,
-	}
+		Data:       buf,
+		Errors:     ec.Errors,
+		Extensions: ec.Extensions}
 }
 
 func (e *executableSchema) Mutation(ctx context.Context, op *ast.OperationDefinition) *graphql.Response {
@@ -233,8 +335,9 @@ func (e *executableSchema) Mutation(ctx context.Context, op *ast.OperationDefini
 	})
 
 	return &graphql.Response{
-		Data:   buf,
-		Errors: ec.Errors,
+		Data:       buf,
+		Errors:     ec.Errors,
+		Extensions: ec.Extensions,
 	}
 }
 
@@ -245,6 +348,251 @@ func (e *executableSchema) Subscription(ctx context.Context, op *ast.OperationDe
 type executionContext struct {
 	*graphql.RequestContext
 	*executableSchema
+}
+
+var chatroomImplementors = []string{"Chatroom"}
+
+// nolint: gocyclo, errcheck, gas, goconst
+func (ec *executionContext) _Chatroom(ctx context.Context, sel ast.SelectionSet, obj *Chatroom) graphql.Marshaler {
+	fields := graphql.CollectFields(ctx, sel, chatroomImplementors)
+
+	out := graphql.NewOrderedMap(len(fields))
+	invalid := false
+	for i, field := range fields {
+		out.Keys[i] = field.Alias
+
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Chatroom")
+		case "id":
+			out.Values[i] = ec._Chatroom_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		case "messages":
+			out.Values[i] = ec._Chatroom_messages(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+
+	if invalid {
+		return graphql.Null
+	}
+	return out
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _Chatroom_id(ctx context.Context, field graphql.CollectedField, obj *Chatroom) graphql.Marshaler {
+	rctx := &graphql.ResolverContext{
+		Object: "Chatroom",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
+		return obj.ID, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	return graphql.MarshalID(res)
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _Chatroom_messages(ctx context.Context, field graphql.CollectedField, obj *Chatroom) graphql.Marshaler {
+	rctx := &graphql.ResolverContext{
+		Object: "Chatroom",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
+		return obj.Messages, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]Message)
+	rctx.Result = res
+
+	arr1 := make(graphql.Array, len(res))
+	var wg sync.WaitGroup
+
+	isLen1 := len(res) == 1
+	if !isLen1 {
+		wg.Add(len(res))
+	}
+
+	for idx1 := range res {
+		idx1 := idx1
+		rctx := &graphql.ResolverContext{
+			Index:  &idx1,
+			Result: &res[idx1],
+		}
+		ctx := graphql.WithResolverContext(ctx, rctx)
+		f := func(idx1 int) {
+			if !isLen1 {
+				defer wg.Done()
+			}
+			arr1[idx1] = func() graphql.Marshaler {
+
+				return ec._Message(ctx, field.Selections, &res[idx1])
+			}()
+		}
+		if isLen1 {
+			f(idx1)
+		} else {
+			go f(idx1)
+		}
+
+	}
+	wg.Wait()
+	return arr1
+}
+
+var messageImplementors = []string{"Message"}
+
+// nolint: gocyclo, errcheck, gas, goconst
+func (ec *executionContext) _Message(ctx context.Context, sel ast.SelectionSet, obj *Message) graphql.Marshaler {
+	fields := graphql.CollectFields(ctx, sel, messageImplementors)
+
+	out := graphql.NewOrderedMap(len(fields))
+	invalid := false
+	for i, field := range fields {
+		out.Keys[i] = field.Alias
+
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Message")
+		case "id":
+			out.Values[i] = ec._Message_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		case "text":
+			out.Values[i] = ec._Message_text(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		case "createdBy":
+			out.Values[i] = ec._Message_createdBy(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		case "createdAt":
+			out.Values[i] = ec._Message_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+
+	if invalid {
+		return graphql.Null
+	}
+	return out
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _Message_id(ctx context.Context, field graphql.CollectedField, obj *Message) graphql.Marshaler {
+	rctx := &graphql.ResolverContext{
+		Object: "Message",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
+		return obj.ID, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	return graphql.MarshalID(res)
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _Message_text(ctx context.Context, field graphql.CollectedField, obj *Message) graphql.Marshaler {
+	rctx := &graphql.ResolverContext{
+		Object: "Message",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
+		return obj.Text, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	return graphql.MarshalString(res)
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _Message_createdBy(ctx context.Context, field graphql.CollectedField, obj *Message) graphql.Marshaler {
+	rctx := &graphql.ResolverContext{
+		Object: "Message",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
+		return obj.CreatedBy, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	return graphql.MarshalString(res)
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _Message_createdAt(ctx context.Context, field graphql.CollectedField, obj *Message) graphql.Marshaler {
+	rctx := &graphql.ResolverContext{
+		Object: "Message",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
+		return obj.CreatedAt, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	rctx.Result = res
+	return graphql.MarshalTime(res)
 }
 
 var mutationImplementors = []string{"Mutation"}
@@ -272,6 +620,11 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			}
 		case "login":
 			out.Values[i] = ec._Mutation_login(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		case "postMessage":
+			out.Values[i] = ec._Mutation_postMessage(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalid = true
 			}
@@ -309,10 +662,10 @@ func (ec *executionContext) _Mutation_register(ctx context.Context, field graphq
 		}
 		return graphql.Null
 	}
-	res := resTmp.(User)
+	res := resTmp.(Viewer)
 	rctx.Result = res
 
-	return ec._User(ctx, field.Selections, &res)
+	return ec._Viewer(ctx, field.Selections, &res)
 }
 
 // nolint: vetshadow
@@ -338,10 +691,39 @@ func (ec *executionContext) _Mutation_login(ctx context.Context, field graphql.C
 		}
 		return graphql.Null
 	}
-	res := resTmp.(User)
+	res := resTmp.(Viewer)
 	rctx.Result = res
 
-	return ec._User(ctx, field.Selections, &res)
+	return ec._Viewer(ctx, field.Selections, &res)
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _Mutation_postMessage(ctx context.Context, field graphql.CollectedField) graphql.Marshaler {
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := field_Mutation_postMessage_args(rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx := &graphql.ResolverContext{
+		Object: "Mutation",
+		Args:   args,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, nil, func(ctx context.Context) (interface{}, error) {
+		return ec.resolvers.Mutation().PostMessage(ctx, args["text"].(string), args["username"].(string), args["roomId"].(string))
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(Message)
+	rctx.Result = res
+
+	return ec._Message(ctx, field.Selections, &res)
 }
 
 var queryImplementors = []string{"Query"}
@@ -367,6 +749,9 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			wg.Add(1)
 			go func(i int, field graphql.CollectedField) {
 				out.Values[i] = ec._Query_me(ctx, field)
+				if out.Values[i] == graphql.Null {
+					invalid = true
+				}
 				wg.Done()
 			}(i, field)
 		case "__type":
@@ -396,16 +781,15 @@ func (ec *executionContext) _Query_me(ctx context.Context, field graphql.Collect
 		return ec.resolvers.Query().Me(ctx)
 	})
 	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*User)
+	res := resTmp.(Viewer)
 	rctx.Result = res
 
-	if res == nil {
-		return graphql.Null
-	}
-
-	return ec._User(ctx, field.Selections, res)
+	return ec._Viewer(ctx, field.Selections, &res)
 }
 
 // nolint: vetshadow
@@ -462,11 +846,11 @@ func (ec *executionContext) _Query___schema(ctx context.Context, field graphql.C
 	return ec.___Schema(ctx, field.Selections, res)
 }
 
-var userImplementors = []string{"User"}
+var viewerImplementors = []string{"Viewer"}
 
 // nolint: gocyclo, errcheck, gas, goconst
-func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj *User) graphql.Marshaler {
-	fields := graphql.CollectFields(ctx, sel, userImplementors)
+func (ec *executionContext) _Viewer(ctx context.Context, sel ast.SelectionSet, obj *Viewer) graphql.Marshaler {
+	fields := graphql.CollectFields(ctx, sel, viewerImplementors)
 
 	out := graphql.NewOrderedMap(len(fields))
 	invalid := false
@@ -475,19 +859,19 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("User")
+			out.Values[i] = graphql.MarshalString("Viewer")
 		case "id":
-			out.Values[i] = ec._User_id(ctx, field, obj)
+			out.Values[i] = ec._Viewer_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalid = true
 			}
 		case "username":
-			out.Values[i] = ec._User_username(ctx, field, obj)
+			out.Values[i] = ec._Viewer_username(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalid = true
 			}
 		case "token":
-			out.Values[i] = ec._User_token(ctx, field, obj)
+			out.Values[i] = ec._Viewer_token(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalid = true
 			}
@@ -503,9 +887,9 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 }
 
 // nolint: vetshadow
-func (ec *executionContext) _User_id(ctx context.Context, field graphql.CollectedField, obj *User) graphql.Marshaler {
+func (ec *executionContext) _Viewer_id(ctx context.Context, field graphql.CollectedField, obj *Viewer) graphql.Marshaler {
 	rctx := &graphql.ResolverContext{
-		Object: "User",
+		Object: "Viewer",
 		Args:   nil,
 		Field:  field,
 	}
@@ -525,9 +909,9 @@ func (ec *executionContext) _User_id(ctx context.Context, field graphql.Collecte
 }
 
 // nolint: vetshadow
-func (ec *executionContext) _User_username(ctx context.Context, field graphql.CollectedField, obj *User) graphql.Marshaler {
+func (ec *executionContext) _Viewer_username(ctx context.Context, field graphql.CollectedField, obj *Viewer) graphql.Marshaler {
 	rctx := &graphql.ResolverContext{
-		Object: "User",
+		Object: "Viewer",
 		Args:   nil,
 		Field:  field,
 	}
@@ -547,9 +931,9 @@ func (ec *executionContext) _User_username(ctx context.Context, field graphql.Co
 }
 
 // nolint: vetshadow
-func (ec *executionContext) _User_token(ctx context.Context, field graphql.CollectedField, obj *User) graphql.Marshaler {
+func (ec *executionContext) _Viewer_token(ctx context.Context, field graphql.CollectedField, obj *Viewer) graphql.Marshaler {
 	rctx := &graphql.ResolverContext{
-		Object: "User",
+		Object: "Viewer",
 		Args:   nil,
 		Field:  field,
 	}
@@ -1917,18 +2301,33 @@ func (ec *executionContext) introspectType(name string) *introspection.Type {
 }
 
 var parsedSchema = gqlparser.MustLoadSchema(
-	&ast.Source{Name: "schema.graphql", Input: `# GraphQL schema example
-#
-# https://gqlgen.com/getting-started/
+	&ast.Source{Name: "schema.graphql", Input: `type Query {
+  me: Viewer!
+}
 
-type User {
+type Mutation {
+  register(input: NewUser!): Viewer!
+  login(input: LoginInput!): Viewer!
+  postMessage(text: String!, username: String!, roomId: String!): Message!
+}
+
+type Viewer {
   id: ID!
   username: String!
   token: String!
+  # room(id: String!): Chatroom!
 }
 
-type Query {
-  me: User
+type Chatroom {
+    id: ID!
+    messages: [Message!]!
+}
+
+type Message {
+    id: ID!
+    text: String!
+    createdBy: String!
+    createdAt: Time!
 }
 
 input NewUser {
@@ -1941,8 +2340,5 @@ input LoginInput {
   password: String!
 }
 
-type Mutation {
-  register(input: NewUser!): User!
-  login(input: LoginInput!): User!
-}`},
+scalar Time`},
 )

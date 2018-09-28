@@ -1,15 +1,30 @@
-# GraphQL schema example
-#
-# https://gqlgen.com/getting-started/
+type Query {
+  me: Viewer!
+}
 
-type User {
+type Mutation {
+  register(input: NewUser!): Viewer!
+  login(input: LoginInput!): Viewer!
+  postMessage(text: String!, username: String!, roomId: String!): Message!
+}
+
+type Viewer {
   id: ID!
   username: String!
   token: String!
+  # room(id: String!): Chatroom!
 }
 
-type Query {
-  me: User
+type Chatroom {
+    id: ID!
+    messages: [Message!]!
+}
+
+type Message {
+    id: ID!
+    text: String!
+    createdBy: String!
+    createdAt: Time!
 }
 
 input NewUser {
@@ -22,7 +37,4 @@ input LoginInput {
   password: String!
 }
 
-type Mutation {
-  register(input: NewUser!): User!
-  login(input: LoginInput!): User!
-}
+scalar Time

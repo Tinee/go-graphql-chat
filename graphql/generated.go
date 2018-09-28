@@ -2,9 +2,25 @@
 
 package graphql
 
+import (
+	time "time"
+)
+
+type Chatroom struct {
+	ID       string    `json:"id"`
+	Messages []Message `json:"messages"`
+}
+
 type LoginInput struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
+}
+
+type Message struct {
+	ID        string    `json:"id"`
+	Text      string    `json:"text"`
+	CreatedBy string    `json:"createdBy"`
+	CreatedAt time.Time `json:"createdAt"`
 }
 
 type NewUser struct {
@@ -12,7 +28,7 @@ type NewUser struct {
 	Password string `json:"password"`
 }
 
-type User struct {
+type Viewer struct {
 	ID       string `json:"id"`
 	Username string `json:"username"`
 	Token    string `json:"token"`

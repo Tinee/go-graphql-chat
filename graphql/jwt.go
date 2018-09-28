@@ -16,26 +16,26 @@ func (r *Resolver) claimJWT(u domain.User) string {
 	return t
 }
 
-func (r *Resolver) validateToken(token string) (User, error) {
+func (r *Resolver) validateToken(token string) (Viewer, error) {
 	t, err := jwt.Parse(token, func(*jwt.Token) (interface{}, error) {
 		return []byte(r.secret), nil
 	})
 	if err != nil || !t.Valid {
-		return User{}, ErrInvalidToken
+		return Viewer{}, ErrInvalidToken
 	}
 
 	claims, ok := t.Claims.(jwt.MapClaims)
 	if !ok {
-		return User{}, ErrInvalidToken
+		return Viewer{}, ErrInvalidToken
 	}
 
 	id, _ := claims["id"].(string)
 
 	u, err := r.u.Find(id)
 	if err != nil {
-		return User{}, ErrInvalidToken
+		return Viewer{}, ErrInvalidToken
 	}
-	out := User{
+	out := Viewer{
 		ID:       u.ID,
 		Token:    token,
 		Username: u.Username,
