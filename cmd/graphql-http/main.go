@@ -9,6 +9,8 @@ import (
 	"github.com/Tinee/go-graphql-chat/graphql"
 	"github.com/Tinee/go-graphql-chat/inmemory"
 	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/middleware"
+	"github.com/gorilla/websocket"
 	"github.com/rs/cors"
 )
 
@@ -16,6 +18,7 @@ func main() {
 	mux := chi.NewMux()
 	inmem := inmemory.NewClient()
 	ur := inmem.UserRepository()
+	ms := inmem.MessageRepository()
 	var (
 		port   = getEnvOrDefault("APP_PORT", "8080")
 		secret = getEnvOrDefault("APP_SECRET", "localSecret")
@@ -23,11 +26,20 @@ func main() {
 
 	mux.Use(
 		cors.AllowAll().Handler,
+		middleware.RequestID,
+		middleware.Recoverer,
+		// middleware.RequestLogger()
+		middleware.DefaultLogger,
 	)
-	res := graphql.NewResolver(ur, secret)
 
-	mux.Handle("/query", handler.GraphQL(graphql.NewExecutableSchema(graphql.Config{Resolvers: res})))
-	log.Printf("connect to http://localhost:%s/ for GraphQL playground", "8080")
+	r := graphql.New(ur, ms, secret)
+	mux.Handle("/graphql", handler.GraphQL(r,
+		handler.WebsocketUpgrader(websocket.Upgrader{
+			CheckOrigin: func(r *http.Request) bool {
+				return true
+			},
+		})))
+
 	log.Fatal(http.ListenAndServe(":"+port, mux))
 }
 
