@@ -5,26 +5,30 @@ type Query {
 type Mutation {
   register(input: NewUser!): Viewer!
   login(input: LoginInput!): Viewer!
-  postMessage(text: String!, username: String!, roomId: String!): Message!
+  postMessage(input: NewMessage!): Message!
+}
+
+type Subscription {
+    messageAdded(id: ID!): Message!
 }
 
 type Viewer {
   id: ID!
   username: String!
   token: String!
-  # room(id: String!): Chatroom!
-}
-
-type Chatroom {
-    id: ID!
-    messages: [Message!]!
 }
 
 type Message {
-    id: ID!
-    text: String!
-    createdBy: String!
-    createdAt: Time!
+  id: ID!
+  text: String!
+  senderId: String!
+  createdAt: Time!
+}
+
+input NewMessage {
+  text: String!
+  senderId: String!
+  receiverId: String!
 }
 
 input NewUser {

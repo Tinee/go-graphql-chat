@@ -33,32 +33,32 @@ type Config struct {
 type ResolverRoot interface {
 	Mutation() MutationResolver
 	Query() QueryResolver
+	Subscription() SubscriptionResolver
 }
 
 type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
-	Chatroom struct {
-		Id       func(childComplexity int) int
-		Messages func(childComplexity int) int
-	}
-
 	Message struct {
 		Id        func(childComplexity int) int
 		Text      func(childComplexity int) int
-		CreatedBy func(childComplexity int) int
+		SenderId  func(childComplexity int) int
 		CreatedAt func(childComplexity int) int
 	}
 
 	Mutation struct {
 		Register    func(childComplexity int, input NewUser) int
 		Login       func(childComplexity int, input LoginInput) int
-		PostMessage func(childComplexity int, text string, username string, roomId string) int
+		PostMessage func(childComplexity int, input NewMessage) int
 	}
 
 	Query struct {
 		Me func(childComplexity int) int
+	}
+
+	Subscription struct {
+		MessageAdded func(childComplexity int, id string) int
 	}
 
 	Viewer struct {
@@ -71,10 +71,13 @@ type ComplexityRoot struct {
 type MutationResolver interface {
 	Register(ctx context.Context, input NewUser) (Viewer, error)
 	Login(ctx context.Context, input LoginInput) (Viewer, error)
-	PostMessage(ctx context.Context, text string, username string, roomId string) (Message, error)
+	PostMessage(ctx context.Context, input NewMessage) (Message, error)
 }
 type QueryResolver interface {
 	Me(ctx context.Context) (Viewer, error)
+}
+type SubscriptionResolver interface {
+	MessageAdded(ctx context.Context, id string) (<-chan Message, error)
 }
 
 func field_Mutation_register_args(rawArgs map[string]interface{}) (map[string]interface{}, error) {
@@ -109,33 +112,15 @@ func field_Mutation_login_args(rawArgs map[string]interface{}) (map[string]inter
 
 func field_Mutation_postMessage_args(rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["text"]; ok {
+	var arg0 NewMessage
+	if tmp, ok := rawArgs["input"]; ok {
 		var err error
-		arg0, err = graphql.UnmarshalString(tmp)
+		arg0, err = UnmarshalNewMessage(tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["text"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["username"]; ok {
-		var err error
-		arg1, err = graphql.UnmarshalString(tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["username"] = arg1
-	var arg2 string
-	if tmp, ok := rawArgs["roomId"]; ok {
-		var err error
-		arg2, err = graphql.UnmarshalString(tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["roomId"] = arg2
+	args["input"] = arg0
 	return args, nil
 
 }
@@ -151,6 +136,21 @@ func field_Query___type_args(rawArgs map[string]interface{}) (map[string]interfa
 		}
 	}
 	args["name"] = arg0
+	return args, nil
+
+}
+
+func field_Subscription_messageAdded_args(rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["id"]; ok {
+		var err error
+		arg0, err = graphql.UnmarshalID(tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
 	return args, nil
 
 }
@@ -198,20 +198,6 @@ func (e *executableSchema) Schema() *ast.Schema {
 func (e *executableSchema) Complexity(typeName, field string, childComplexity int, rawArgs map[string]interface{}) (int, bool) {
 	switch typeName + "." + field {
 
-	case "Chatroom.id":
-		if e.complexity.Chatroom.Id == nil {
-			break
-		}
-
-		return e.complexity.Chatroom.Id(childComplexity), true
-
-	case "Chatroom.messages":
-		if e.complexity.Chatroom.Messages == nil {
-			break
-		}
-
-		return e.complexity.Chatroom.Messages(childComplexity), true
-
 	case "Message.id":
 		if e.complexity.Message.Id == nil {
 			break
@@ -226,12 +212,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Message.Text(childComplexity), true
 
-	case "Message.createdBy":
-		if e.complexity.Message.CreatedBy == nil {
+	case "Message.senderId":
+		if e.complexity.Message.SenderId == nil {
 			break
 		}
 
-		return e.complexity.Message.CreatedBy(childComplexity), true
+		return e.complexity.Message.SenderId(childComplexity), true
 
 	case "Message.createdAt":
 		if e.complexity.Message.CreatedAt == nil {
@@ -274,7 +260,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.PostMessage(childComplexity, args["text"].(string), args["username"].(string), args["roomId"].(string)), true
+		return e.complexity.Mutation.PostMessage(childComplexity, args["input"].(NewMessage)), true
 
 	case "Query.me":
 		if e.complexity.Query.Me == nil {
@@ -282,6 +268,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.Me(childComplexity), true
+
+	case "Subscription.messageAdded":
+		if e.complexity.Subscription.MessageAdded == nil {
+			break
+		}
+
+		args, err := field_Subscription_messageAdded_args(rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Subscription.MessageAdded(childComplexity, args["id"].(string)), true
 
 	case "Viewer.id":
 		if e.complexity.Viewer.Id == nil {
@@ -342,124 +340,41 @@ func (e *executableSchema) Mutation(ctx context.Context, op *ast.OperationDefini
 }
 
 func (e *executableSchema) Subscription(ctx context.Context, op *ast.OperationDefinition) func() *graphql.Response {
-	return graphql.OneShot(graphql.ErrorResponse(ctx, "subscriptions are not supported"))
+	ec := executionContext{graphql.GetRequestContext(ctx), e}
+
+	next := ec._Subscription(ctx, op.SelectionSet)
+	if ec.Errors != nil {
+		return graphql.OneShot(&graphql.Response{Data: []byte("null"), Errors: ec.Errors})
+	}
+
+	var buf bytes.Buffer
+	return func() *graphql.Response {
+		buf := ec.RequestMiddleware(ctx, func(ctx context.Context) []byte {
+			buf.Reset()
+			data := next()
+
+			if data == nil {
+				return nil
+			}
+			data.MarshalGQL(&buf)
+			return buf.Bytes()
+		})
+
+		if buf == nil {
+			return nil
+		}
+
+		return &graphql.Response{
+			Data:       buf,
+			Errors:     ec.Errors,
+			Extensions: ec.Extensions,
+		}
+	}
 }
 
 type executionContext struct {
 	*graphql.RequestContext
 	*executableSchema
-}
-
-var chatroomImplementors = []string{"Chatroom"}
-
-// nolint: gocyclo, errcheck, gas, goconst
-func (ec *executionContext) _Chatroom(ctx context.Context, sel ast.SelectionSet, obj *Chatroom) graphql.Marshaler {
-	fields := graphql.CollectFields(ctx, sel, chatroomImplementors)
-
-	out := graphql.NewOrderedMap(len(fields))
-	invalid := false
-	for i, field := range fields {
-		out.Keys[i] = field.Alias
-
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("Chatroom")
-		case "id":
-			out.Values[i] = ec._Chatroom_id(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalid = true
-			}
-		case "messages":
-			out.Values[i] = ec._Chatroom_messages(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalid = true
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-
-	if invalid {
-		return graphql.Null
-	}
-	return out
-}
-
-// nolint: vetshadow
-func (ec *executionContext) _Chatroom_id(ctx context.Context, field graphql.CollectedField, obj *Chatroom) graphql.Marshaler {
-	rctx := &graphql.ResolverContext{
-		Object: "Chatroom",
-		Args:   nil,
-		Field:  field,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
-		return obj.ID, nil
-	})
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	rctx.Result = res
-	return graphql.MarshalID(res)
-}
-
-// nolint: vetshadow
-func (ec *executionContext) _Chatroom_messages(ctx context.Context, field graphql.CollectedField, obj *Chatroom) graphql.Marshaler {
-	rctx := &graphql.ResolverContext{
-		Object: "Chatroom",
-		Args:   nil,
-		Field:  field,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
-		return obj.Messages, nil
-	})
-	if resTmp == nil {
-		if !ec.HasError(rctx) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.([]Message)
-	rctx.Result = res
-
-	arr1 := make(graphql.Array, len(res))
-	var wg sync.WaitGroup
-
-	isLen1 := len(res) == 1
-	if !isLen1 {
-		wg.Add(len(res))
-	}
-
-	for idx1 := range res {
-		idx1 := idx1
-		rctx := &graphql.ResolverContext{
-			Index:  &idx1,
-			Result: &res[idx1],
-		}
-		ctx := graphql.WithResolverContext(ctx, rctx)
-		f := func(idx1 int) {
-			if !isLen1 {
-				defer wg.Done()
-			}
-			arr1[idx1] = func() graphql.Marshaler {
-
-				return ec._Message(ctx, field.Selections, &res[idx1])
-			}()
-		}
-		if isLen1 {
-			f(idx1)
-		} else {
-			go f(idx1)
-		}
-
-	}
-	wg.Wait()
-	return arr1
 }
 
 var messageImplementors = []string{"Message"}
@@ -486,8 +401,8 @@ func (ec *executionContext) _Message(ctx context.Context, sel ast.SelectionSet, 
 			if out.Values[i] == graphql.Null {
 				invalid = true
 			}
-		case "createdBy":
-			out.Values[i] = ec._Message_createdBy(ctx, field, obj)
+		case "senderId":
+			out.Values[i] = ec._Message_senderId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalid = true
 			}
@@ -552,7 +467,7 @@ func (ec *executionContext) _Message_text(ctx context.Context, field graphql.Col
 }
 
 // nolint: vetshadow
-func (ec *executionContext) _Message_createdBy(ctx context.Context, field graphql.CollectedField, obj *Message) graphql.Marshaler {
+func (ec *executionContext) _Message_senderId(ctx context.Context, field graphql.CollectedField, obj *Message) graphql.Marshaler {
 	rctx := &graphql.ResolverContext{
 		Object: "Message",
 		Args:   nil,
@@ -560,7 +475,7 @@ func (ec *executionContext) _Message_createdBy(ctx context.Context, field graphq
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
-		return obj.CreatedBy, nil
+		return obj.SenderID, nil
 	})
 	if resTmp == nil {
 		if !ec.HasError(rctx) {
@@ -712,7 +627,7 @@ func (ec *executionContext) _Mutation_postMessage(ctx context.Context, field gra
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	resTmp := ec.FieldMiddleware(ctx, nil, func(ctx context.Context) (interface{}, error) {
-		return ec.resolvers.Mutation().PostMessage(ctx, args["text"].(string), args["username"].(string), args["roomId"].(string))
+		return ec.resolvers.Mutation().PostMessage(ctx, args["input"].(NewMessage))
 	})
 	if resTmp == nil {
 		if !ec.HasError(rctx) {
@@ -844,6 +759,55 @@ func (ec *executionContext) _Query___schema(ctx context.Context, field graphql.C
 	}
 
 	return ec.___Schema(ctx, field.Selections, res)
+}
+
+var subscriptionImplementors = []string{"Subscription"}
+
+// nolint: gocyclo, errcheck, gas, goconst
+func (ec *executionContext) _Subscription(ctx context.Context, sel ast.SelectionSet) func() graphql.Marshaler {
+	fields := graphql.CollectFields(ctx, sel, subscriptionImplementors)
+	ctx = graphql.WithResolverContext(ctx, &graphql.ResolverContext{
+		Object: "Subscription",
+	})
+	if len(fields) != 1 {
+		ec.Errorf(ctx, "must subscribe to exactly one stream")
+		return nil
+	}
+
+	switch fields[0].Name {
+	case "messageAdded":
+		return ec._Subscription_messageAdded(ctx, fields[0])
+	default:
+		panic("unknown field " + strconv.Quote(fields[0].Name))
+	}
+}
+
+func (ec *executionContext) _Subscription_messageAdded(ctx context.Context, field graphql.CollectedField) func() graphql.Marshaler {
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := field_Subscription_messageAdded_args(rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return nil
+	}
+	ctx = graphql.WithResolverContext(ctx, &graphql.ResolverContext{
+		Field: field,
+	})
+	results, err := ec.resolvers.Subscription().MessageAdded(ctx, args["id"].(string))
+	if err != nil {
+		ec.Error(ctx, err)
+		return nil
+	}
+	return func() graphql.Marshaler {
+		res, ok := <-results
+		if !ok {
+			return nil
+		}
+		var out graphql.OrderedMap
+		out.Add(field.Alias, func() graphql.Marshaler {
+			return ec._Message(ctx, field.Selections, &res)
+		}())
+		return &out
+	}
 }
 
 var viewerImplementors = []string{"Viewer"}
@@ -2253,6 +2217,36 @@ func UnmarshalLoginInput(v interface{}) (LoginInput, error) {
 	return it, nil
 }
 
+func UnmarshalNewMessage(v interface{}) (NewMessage, error) {
+	var it NewMessage
+	var asMap = v.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "text":
+			var err error
+			it.Text, err = graphql.UnmarshalString(v)
+			if err != nil {
+				return it, err
+			}
+		case "senderId":
+			var err error
+			it.SenderID, err = graphql.UnmarshalString(v)
+			if err != nil {
+				return it, err
+			}
+		case "receiverId":
+			var err error
+			it.ReceiverID, err = graphql.UnmarshalString(v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func UnmarshalNewUser(v interface{}) (NewUser, error) {
 	var it NewUser
 	var asMap = v.(map[string]interface{})
@@ -2308,26 +2302,30 @@ var parsedSchema = gqlparser.MustLoadSchema(
 type Mutation {
   register(input: NewUser!): Viewer!
   login(input: LoginInput!): Viewer!
-  postMessage(text: String!, username: String!, roomId: String!): Message!
+  postMessage(input: NewMessage!): Message!
+}
+
+type Subscription {
+    messageAdded(id: ID!): Message!
 }
 
 type Viewer {
   id: ID!
   username: String!
   token: String!
-  # room(id: String!): Chatroom!
-}
-
-type Chatroom {
-    id: ID!
-    messages: [Message!]!
 }
 
 type Message {
-    id: ID!
-    text: String!
-    createdBy: String!
-    createdAt: Time!
+  id: ID!
+  text: String!
+  senderId: String!
+  createdAt: Time!
+}
+
+input NewMessage {
+  text: String!
+  senderId: String!
+  receiverId: String!
 }
 
 input NewUser {

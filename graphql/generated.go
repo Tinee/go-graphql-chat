@@ -6,11 +6,6 @@ import (
 	time "time"
 )
 
-type Chatroom struct {
-	ID       string    `json:"id"`
-	Messages []Message `json:"messages"`
-}
-
 type LoginInput struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
@@ -19,8 +14,14 @@ type LoginInput struct {
 type Message struct {
 	ID        string    `json:"id"`
 	Text      string    `json:"text"`
-	CreatedBy string    `json:"createdBy"`
+	SenderID  string    `json:"senderId"`
 	CreatedAt time.Time `json:"createdAt"`
+}
+
+type NewMessage struct {
+	Text       string `json:"text"`
+	SenderID   string `json:"senderId"`
+	ReceiverID string `json:"receiverId"`
 }
 
 type NewUser struct {
