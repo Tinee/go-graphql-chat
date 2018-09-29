@@ -4,19 +4,21 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"time"
 
-	"github.com/99designs/gqlgen/handler"
+	"github.com/Sirupsen/logrus"
+
 	"github.com/Tinee/go-graphql-chat/graphql"
 	"github.com/Tinee/go-graphql-chat/inmemory"
 	"github.com/Tinee/go-graphql-chat/middleware"
 	"github.com/go-chi/chi"
 	chiMiddleware "github.com/go-chi/chi/middleware"
-	"github.com/gorilla/websocket"
 	"github.com/rs/cors"
 )
 
 func main() {
 	var (
+		log    = logrus.New()
 		mux    = chi.NewMux()
 		inmem  = inmemory.NewClient()
 		ur     = inmem.UserRepository()
@@ -25,6 +27,9 @@ func main() {
 		port   = getEnvOrDefault("APP_PORT", "8080")
 		secret = getEnvOrDefault("APP_SECRET", "localSecret")
 	)
+	log.Out = os.Stdout
+	log.SetFormatter(&logrus.JSONFormatter{})
+
 	err := inmem.FillWithMockData()
 	if err != nil {
 		fmt.Printf("Couldn't load the mock data: %v", err)
@@ -34,17 +39,17 @@ func main() {
 		chiMiddleware.RequestID,
 		chiMiddleware.Recoverer,
 		middleware.TokenLifter,
+		chiMiddleware.Timeout(time.Second*10),
 	)
 
-	r := graphql.New(ur, ms, p, secret)
-	mux.Handle("/graphql", handler.GraphQL(r,
-		handler.WebsocketUpgrader(websocket.Upgrader{
-			CheckOrigin: func(r *http.Request) bool {
-				return true
-			},
-		})))
+	mux.Handle(
+		"/graphql",
+		graphql.NewGraphQLHandlerFunc(ur, ms, p, log, secret),
+	)
 
+	fmt.Printf("Now listening on port :%v\n", port)
 	http.ListenAndServe(":"+port, mux)
+
 }
 
 func getEnvOrDefault(key, d string) string {
