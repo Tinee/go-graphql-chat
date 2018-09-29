@@ -33,6 +33,7 @@ func (uim *userInMemory) Create(u domain.User) (domain.User, error) {
 	u.CreatedAt = time.Now()
 
 	uim.mtx.Lock()
+	defer uim.mtx.Unlock()
 	// if user exists bail.
 	for _, v := range uim.users {
 		if v.Username == u.Username {
@@ -40,7 +41,6 @@ func (uim *userInMemory) Create(u domain.User) (domain.User, error) {
 		}
 	}
 	uim.users = append(uim.users, u)
-	uim.mtx.Unlock()
 
 	return u, nil
 }

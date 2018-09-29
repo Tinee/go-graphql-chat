@@ -1,7 +1,7 @@
 package main
 
 import (
-	"log"
+	"fmt"
 	"net/http"
 	"os"
 
@@ -15,6 +15,7 @@ import (
 )
 
 func main() {
+	// fmt.Println(time.Now().)
 	var (
 		mux    = chi.NewMux()
 		inmem  = inmemory.NewClient()
@@ -24,7 +25,10 @@ func main() {
 		port   = getEnvOrDefault("APP_PORT", "8080")
 		secret = getEnvOrDefault("APP_SECRET", "localSecret")
 	)
-
+	err := inmem.FillWithMockData()
+	if err != nil {
+		fmt.Printf("Couldn't load the mock data: %v", err)
+	}
 	mux.Use(
 		cors.AllowAll().Handler,
 		middleware.RequestID,
@@ -39,7 +43,7 @@ func main() {
 			},
 		})))
 
-	log.Fatal(http.ListenAndServe(":"+port, mux))
+	http.ListenAndServe(":"+port, mux)
 }
 
 func getEnvOrDefault(key, d string) string {

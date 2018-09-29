@@ -1,7 +1,9 @@
 package inmemory
 
 import (
+	"encoding/json"
 	"math/rand"
+	"os"
 	"sync"
 	"time"
 
@@ -38,6 +40,34 @@ func (c *Client) MessageRepository() domain.MessageRepository {
 
 func (c *Client) ProfileRepository() domain.ProfileRepository {
 	return c.p
+}
+
+type mockData struct {
+	Profiles []domain.Profile `json:"profiles"`
+	Users    []domain.User    `json:"users"`
+}
+
+// FillWithMockData this is when I realized that it sucks to not having a database in development.
+func (c *Client) FillWithMockData() error {
+
+	f, err := os.Open("inmemory/mock_data.json")
+	var data mockData
+	if err != nil {
+		return err
+	}
+	err = json.NewDecoder(f).Decode(&data)
+	if err != nil {
+		return err
+	}
+
+	for _, p := range data.Profiles {
+		c.p.profiles = append(c.p.profiles, p)
+	}
+
+	for _, u := range data.Users {
+		c.u.users = append(c.u.users, u)
+	}
+	return nil
 }
 
 func generateID() string {
