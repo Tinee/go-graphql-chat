@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"time"
 
 	"github.com/Sirupsen/logrus"
 
@@ -39,7 +38,6 @@ func main() {
 		chiMiddleware.RequestID,
 		chiMiddleware.Recoverer,
 		middleware.TokenLifter,
-		chiMiddleware.Timeout(time.Second*10),
 	)
 
 	mux.Handle(
