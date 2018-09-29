@@ -2,14 +2,17 @@ package graphql
 
 import (
 	"context"
-	"fmt"
 	"sync"
 )
 
 func (r subscriptionResolver) MessageAdded(ctx context.Context, id string) (<-chan Message, error) {
-	c := r.ls.addListener(ctx, id)
+	ls := r.ls.addListener(ctx, id)
+	// Not sure if I need to lock here, better safe then sorry.
+	r.ls.mtx.Lock()
+	ls.mc = make(chan Message, 1)
+	r.ls.mtx.Unlock()
 
-	return c, nil
+	return ls.mc, nil
 }
 
 type listenerPool struct {
@@ -21,12 +24,12 @@ type listener struct {
 	mc chan Message
 }
 
-func (p *listenerPool) addListener(ctx context.Context, key string) <-chan Message {
+func (p *listenerPool) addListener(ctx context.Context, key string) *listener {
 	p.mtx.Lock()
 	ls := p.ls[key]
 	if ls == nil {
 		// defaults the listener and insert one into the map.
-		ls = &listener{mc: make(chan Message, 1)}
+		ls = &listener{}
 	}
 	p.ls[key] = ls
 	p.mtx.Unlock()
@@ -39,17 +42,15 @@ func (p *listenerPool) addListener(ctx context.Context, key string) <-chan Messa
 		p.mtx.Unlock()
 	}()
 
-	return ls.mc
+	return ls
 }
 
 func (p *listenerPool) sendMessage(receiverID string, m Message) {
 	p.mtx.Lock()
 	defer p.mtx.Unlock()
-	fmt.Println(receiverID)
 	ls := p.ls[receiverID]
 	if ls == nil {
-		fmt.Println("nil")
-		// listener seems to have gone online, bail.
+		// listener seems to have gone offline, bail.
 		return
 	}
 

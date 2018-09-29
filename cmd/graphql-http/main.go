@@ -15,12 +15,12 @@ import (
 )
 
 func main() {
-	mux := chi.NewMux()
-	inmem := inmemory.NewClient()
-	ur := inmem.UserRepository()
-	ms := inmem.MessageRepository()
-	p := inmem.ProfileRepository()
 	var (
+		mux    = chi.NewMux()
+		inmem  = inmemory.NewClient()
+		ur     = inmem.UserRepository()
+		ms     = inmem.MessageRepository()
+		p      = inmem.ProfileRepository()
 		port   = getEnvOrDefault("APP_PORT", "8080")
 		secret = getEnvOrDefault("APP_SECRET", "localSecret")
 	)
@@ -29,8 +29,6 @@ func main() {
 		cors.AllowAll().Handler,
 		middleware.RequestID,
 		middleware.Recoverer,
-		// middleware.RequestLogger()
-		middleware.DefaultLogger,
 	)
 
 	r := graphql.New(ur, ms, p, secret)
