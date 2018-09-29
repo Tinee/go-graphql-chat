@@ -48,3 +48,21 @@ func (r *mutationResolver) PostMessage(ctx context.Context, input NewMessage) (M
 	r.ls.sendMessage(m.ReceiverID, out)
 	return out, nil
 }
+
+func (r *mutationResolver) PostProfile(ctx context.Context, input NewProfile) (Profile, error) {
+	p, err := r.p.Create(domain.Profile{
+		Age:       input.Age,
+		FirstName: input.FirstName,
+		LastName:  input.LastName,
+	})
+	if err != nil {
+		return Profile{}, err
+	}
+	out := Profile{
+		ID:        p.ID,
+		Age:       p.Age,
+		FirstName: p.FirstName,
+		LastName:  p.LastName,
+	}
+	return out, nil
+}

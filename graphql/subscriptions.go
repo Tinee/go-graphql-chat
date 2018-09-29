@@ -32,6 +32,7 @@ func (p *listenerPool) addListener(ctx context.Context, key string) <-chan Messa
 	p.mtx.Unlock()
 
 	go func() {
+		// When user ends their connection we remove him from the pool.
 		<-ctx.Done()
 		p.mtx.Lock()
 		delete(p.ls, key)

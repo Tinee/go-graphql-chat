@@ -51,6 +51,14 @@ type ComplexityRoot struct {
 		Register    func(childComplexity int, input NewUser) int
 		Login       func(childComplexity int, input LoginInput) int
 		PostMessage func(childComplexity int, input NewMessage) int
+		PostProfile func(childComplexity int, input NewProfile) int
+	}
+
+	Profile struct {
+		Id        func(childComplexity int) int
+		FirstName func(childComplexity int) int
+		LastName  func(childComplexity int) int
+		Age       func(childComplexity int) int
 	}
 
 	Query struct {
@@ -72,6 +80,7 @@ type MutationResolver interface {
 	Register(ctx context.Context, input NewUser) (Viewer, error)
 	Login(ctx context.Context, input LoginInput) (Viewer, error)
 	PostMessage(ctx context.Context, input NewMessage) (Message, error)
+	PostProfile(ctx context.Context, input NewProfile) (Profile, error)
 }
 type QueryResolver interface {
 	Me(ctx context.Context) (Viewer, error)
@@ -116,6 +125,21 @@ func field_Mutation_postMessage_args(rawArgs map[string]interface{}) (map[string
 	if tmp, ok := rawArgs["input"]; ok {
 		var err error
 		arg0, err = UnmarshalNewMessage(tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+
+}
+
+func field_Mutation_postProfile_args(rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	args := map[string]interface{}{}
+	var arg0 NewProfile
+	if tmp, ok := rawArgs["input"]; ok {
+		var err error
+		arg0, err = UnmarshalNewProfile(tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -261,6 +285,46 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.PostMessage(childComplexity, args["input"].(NewMessage)), true
+
+	case "Mutation.postProfile":
+		if e.complexity.Mutation.PostProfile == nil {
+			break
+		}
+
+		args, err := field_Mutation_postProfile_args(rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.PostProfile(childComplexity, args["input"].(NewProfile)), true
+
+	case "Profile.id":
+		if e.complexity.Profile.Id == nil {
+			break
+		}
+
+		return e.complexity.Profile.Id(childComplexity), true
+
+	case "Profile.firstName":
+		if e.complexity.Profile.FirstName == nil {
+			break
+		}
+
+		return e.complexity.Profile.FirstName(childComplexity), true
+
+	case "Profile.lastName":
+		if e.complexity.Profile.LastName == nil {
+			break
+		}
+
+		return e.complexity.Profile.LastName(childComplexity), true
+
+	case "Profile.age":
+		if e.complexity.Profile.Age == nil {
+			break
+		}
+
+		return e.complexity.Profile.Age(childComplexity), true
 
 	case "Query.me":
 		if e.complexity.Query.Me == nil {
@@ -543,6 +607,11 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalid = true
 			}
+		case "postProfile":
+			out.Values[i] = ec._Mutation_postProfile(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -639,6 +708,168 @@ func (ec *executionContext) _Mutation_postMessage(ctx context.Context, field gra
 	rctx.Result = res
 
 	return ec._Message(ctx, field.Selections, &res)
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _Mutation_postProfile(ctx context.Context, field graphql.CollectedField) graphql.Marshaler {
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := field_Mutation_postProfile_args(rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx := &graphql.ResolverContext{
+		Object: "Mutation",
+		Args:   args,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, nil, func(ctx context.Context) (interface{}, error) {
+		return ec.resolvers.Mutation().PostProfile(ctx, args["input"].(NewProfile))
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(Profile)
+	rctx.Result = res
+
+	return ec._Profile(ctx, field.Selections, &res)
+}
+
+var profileImplementors = []string{"Profile"}
+
+// nolint: gocyclo, errcheck, gas, goconst
+func (ec *executionContext) _Profile(ctx context.Context, sel ast.SelectionSet, obj *Profile) graphql.Marshaler {
+	fields := graphql.CollectFields(ctx, sel, profileImplementors)
+
+	out := graphql.NewOrderedMap(len(fields))
+	invalid := false
+	for i, field := range fields {
+		out.Keys[i] = field.Alias
+
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Profile")
+		case "id":
+			out.Values[i] = ec._Profile_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		case "firstName":
+			out.Values[i] = ec._Profile_firstName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		case "lastName":
+			out.Values[i] = ec._Profile_lastName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		case "age":
+			out.Values[i] = ec._Profile_age(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+
+	if invalid {
+		return graphql.Null
+	}
+	return out
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _Profile_id(ctx context.Context, field graphql.CollectedField, obj *Profile) graphql.Marshaler {
+	rctx := &graphql.ResolverContext{
+		Object: "Profile",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
+		return obj.ID, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	return graphql.MarshalID(res)
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _Profile_firstName(ctx context.Context, field graphql.CollectedField, obj *Profile) graphql.Marshaler {
+	rctx := &graphql.ResolverContext{
+		Object: "Profile",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
+		return obj.FirstName, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	return graphql.MarshalString(res)
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _Profile_lastName(ctx context.Context, field graphql.CollectedField, obj *Profile) graphql.Marshaler {
+	rctx := &graphql.ResolverContext{
+		Object: "Profile",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
+		return obj.LastName, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	return graphql.MarshalString(res)
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _Profile_age(ctx context.Context, field graphql.CollectedField, obj *Profile) graphql.Marshaler {
+	rctx := &graphql.ResolverContext{
+		Object: "Profile",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
+		return obj.Age, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	rctx.Result = res
+	return graphql.MarshalInt(res)
 }
 
 var queryImplementors = []string{"Query"}
@@ -2247,6 +2478,36 @@ func UnmarshalNewMessage(v interface{}) (NewMessage, error) {
 	return it, nil
 }
 
+func UnmarshalNewProfile(v interface{}) (NewProfile, error) {
+	var it NewProfile
+	var asMap = v.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "firstName":
+			var err error
+			it.FirstName, err = graphql.UnmarshalString(v)
+			if err != nil {
+				return it, err
+			}
+		case "lastName":
+			var err error
+			it.LastName, err = graphql.UnmarshalString(v)
+			if err != nil {
+				return it, err
+			}
+		case "age":
+			var err error
+			it.Age, err = graphql.UnmarshalInt(v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func UnmarshalNewUser(v interface{}) (NewUser, error) {
 	var it NewUser
 	var asMap = v.(map[string]interface{})
@@ -2303,6 +2564,7 @@ type Mutation {
   register(input: NewUser!): Viewer!
   login(input: LoginInput!): Viewer!
   postMessage(input: NewMessage!): Message!
+  postProfile(input: NewProfile!): Profile!
 }
 
 type Subscription {
@@ -2315,11 +2577,24 @@ type Viewer {
   token: String!
 }
 
+type Profile {
+  id: ID!
+  firstName: String!
+  lastName: String!
+  age: Int!
+}
+
 type Message {
   id: ID!
   text: String!
   senderId: String!
   createdAt: Time!
+}
+
+input NewProfile {
+  firstName: String!
+  lastName: String!
+  age: Int!
 }
 
 input NewMessage {

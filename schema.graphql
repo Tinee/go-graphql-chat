@@ -6,6 +6,7 @@ type Mutation {
   register(input: NewUser!): Viewer!
   login(input: LoginInput!): Viewer!
   postMessage(input: NewMessage!): Message!
+  postProfile(input: NewProfile!): Profile!
 }
 
 type Subscription {
@@ -18,11 +19,24 @@ type Viewer {
   token: String!
 }
 
+type Profile {
+  id: ID!
+  firstName: String!
+  lastName: String!
+  age: Int!
+}
+
 type Message {
   id: ID!
   text: String!
   senderId: String!
   createdAt: Time!
+}
+
+input NewProfile {
+  firstName: String!
+  lastName: String!
+  age: Int!
 }
 
 input NewMessage {

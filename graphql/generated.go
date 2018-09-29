@@ -24,9 +24,22 @@ type NewMessage struct {
 	ReceiverID string `json:"receiverId"`
 }
 
+type NewProfile struct {
+	FirstName string `json:"firstName"`
+	LastName  string `json:"lastName"`
+	Age       int    `json:"age"`
+}
+
 type NewUser struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
+}
+
+type Profile struct {
+	ID        string `json:"id"`
+	FirstName string `json:"firstName"`
+	LastName  string `json:"lastName"`
+	Age       int    `json:"age"`
 }
 
 type Viewer struct {

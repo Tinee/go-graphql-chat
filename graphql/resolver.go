@@ -11,15 +11,22 @@ import (
 type Resolver struct {
 	u      domain.UserRepository
 	ms     domain.MessageRepository
+	p      domain.ProfileRepository
 	ls     *listenerPool
 	secret string
 }
 
-func New(u domain.UserRepository, ms domain.MessageRepository, secret string) graphql.ExecutableSchema {
+func New(
+	u domain.UserRepository,
+	ms domain.MessageRepository,
+	p domain.ProfileRepository,
+	secret string) graphql.ExecutableSchema {
+
 	return NewExecutableSchema(Config{
 		Resolvers: &Resolver{
 			u:  u,
 			ms: ms,
+			p:  p,
 			ls: &listenerPool{
 				mtx: sync.Mutex{},
 				ls:  make(map[string]*listener),
