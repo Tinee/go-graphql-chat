@@ -51,6 +51,7 @@ func (r *mutationResolver) PostMessage(ctx context.Context, input NewMessage) (M
 
 func (r *mutationResolver) PostProfile(ctx context.Context, input NewProfile) (Profile, error) {
 	p, err := r.p.Create(domain.Profile{
+		UserID:    input.UserID,
 		Age:       input.Age,
 		FirstName: input.FirstName,
 		LastName:  input.LastName,

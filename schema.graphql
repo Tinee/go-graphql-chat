@@ -21,6 +21,7 @@ type Viewer {
 
 type Profile {
   id: ID!
+  userId: String!
   firstName: String!
   lastName: String!
   age: Int!
@@ -34,6 +35,7 @@ type Message {
 }
 
 input NewProfile {
+  userId: String!
   firstName: String!
   lastName: String!
   age: Int!

@@ -19,6 +19,7 @@ func main() {
 	inmem := inmemory.NewClient()
 	ur := inmem.UserRepository()
 	ms := inmem.MessageRepository()
+	p := inmem.ProfileRepository()
 	var (
 		port   = getEnvOrDefault("APP_PORT", "8080")
 		secret = getEnvOrDefault("APP_SECRET", "localSecret")
@@ -32,7 +33,7 @@ func main() {
 		middleware.DefaultLogger,
 	)
 
-	r := graphql.New(ur, ms, secret)
+	r := graphql.New(ur, ms, p, secret)
 	mux.Handle("/graphql", handler.GraphQL(r,
 		handler.WebsocketUpgrader(websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {

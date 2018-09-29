@@ -56,6 +56,7 @@ type ComplexityRoot struct {
 
 	Profile struct {
 		Id        func(childComplexity int) int
+		UserId    func(childComplexity int) int
 		FirstName func(childComplexity int) int
 		LastName  func(childComplexity int) int
 		Age       func(childComplexity int) int
@@ -304,6 +305,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Profile.Id(childComplexity), true
+
+	case "Profile.userId":
+		if e.complexity.Profile.UserId == nil {
+			break
+		}
+
+		return e.complexity.Profile.UserId(childComplexity), true
 
 	case "Profile.firstName":
 		if e.complexity.Profile.FirstName == nil {
@@ -758,6 +766,11 @@ func (ec *executionContext) _Profile(ctx context.Context, sel ast.SelectionSet, 
 			if out.Values[i] == graphql.Null {
 				invalid = true
 			}
+		case "userId":
+			out.Values[i] = ec._Profile_userId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
 		case "firstName":
 			out.Values[i] = ec._Profile_firstName(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -804,6 +817,28 @@ func (ec *executionContext) _Profile_id(ctx context.Context, field graphql.Colle
 	res := resTmp.(string)
 	rctx.Result = res
 	return graphql.MarshalID(res)
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _Profile_userId(ctx context.Context, field graphql.CollectedField, obj *Profile) graphql.Marshaler {
+	rctx := &graphql.ResolverContext{
+		Object: "Profile",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
+		return obj.UserID, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	return graphql.MarshalString(res)
 }
 
 // nolint: vetshadow
@@ -2484,6 +2519,12 @@ func UnmarshalNewProfile(v interface{}) (NewProfile, error) {
 
 	for k, v := range asMap {
 		switch k {
+		case "userId":
+			var err error
+			it.UserID, err = graphql.UnmarshalString(v)
+			if err != nil {
+				return it, err
+			}
 		case "firstName":
 			var err error
 			it.FirstName, err = graphql.UnmarshalString(v)
@@ -2579,6 +2620,7 @@ type Viewer {
 
 type Profile {
   id: ID!
+  userId: String!
   firstName: String!
   lastName: String!
   age: Int!
@@ -2592,6 +2634,7 @@ type Message {
 }
 
 input NewProfile {
+  userId: String!
   firstName: String!
   lastName: String!
   age: Int!
