@@ -17,6 +17,7 @@ type Viewer {
   id: ID!
   username: String!
   token: String!
+  profile: Profile!
 }
 
 type Profile {

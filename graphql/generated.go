@@ -45,7 +45,8 @@ type Profile struct {
 }
 
 type Viewer struct {
-	ID       string `json:"id"`
-	Username string `json:"username"`
-	Token    string `json:"token"`
+	ID       string  `json:"id"`
+	Username string  `json:"username"`
+	Token    string  `json:"token"`
+	Profile  Profile `json:"profile"`
 }

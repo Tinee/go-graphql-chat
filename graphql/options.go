@@ -25,6 +25,7 @@ func OnErrorLogger(log *logrus.Logger) handler.Option {
 		}(time.Now())
 		return next(ctx)
 	})
+
 }
 
 func RequestLogger(log *logrus.Logger) handler.Option {

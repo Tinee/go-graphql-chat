@@ -11,3 +11,10 @@ model:
 resolver:
   filename: graphql/resolver.go
   type: Resolver
+
+models:
+  Viewer:
+    fields:
+        profile:
+          resolver: true
+        

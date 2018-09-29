@@ -34,6 +34,7 @@ type ResolverRoot interface {
 	Mutation() MutationResolver
 	Query() QueryResolver
 	Subscription() SubscriptionResolver
+	Viewer() ViewerResolver
 }
 
 type DirectiveRoot struct {
@@ -74,6 +75,7 @@ type ComplexityRoot struct {
 		Id       func(childComplexity int) int
 		Username func(childComplexity int) int
 		Token    func(childComplexity int) int
+		Profile  func(childComplexity int) int
 	}
 }
 
@@ -88,6 +90,9 @@ type QueryResolver interface {
 }
 type SubscriptionResolver interface {
 	MessageAdded(ctx context.Context, id string) (<-chan Message, error)
+}
+type ViewerResolver interface {
+	Profile(ctx context.Context, obj *Viewer) (Profile, error)
 }
 
 func field_Mutation_register_args(rawArgs map[string]interface{}) (map[string]interface{}, error) {
@@ -373,6 +378,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Viewer.Token(childComplexity), true
+
+	case "Viewer.profile":
+		if e.complexity.Viewer.Profile == nil {
+			break
+		}
+
+		return e.complexity.Viewer.Profile(childComplexity), true
 
 	}
 	return 0, false
@@ -1082,6 +1094,7 @@ var viewerImplementors = []string{"Viewer"}
 func (ec *executionContext) _Viewer(ctx context.Context, sel ast.SelectionSet, obj *Viewer) graphql.Marshaler {
 	fields := graphql.CollectFields(ctx, sel, viewerImplementors)
 
+	var wg sync.WaitGroup
 	out := graphql.NewOrderedMap(len(fields))
 	invalid := false
 	for i, field := range fields {
@@ -1105,11 +1118,20 @@ func (ec *executionContext) _Viewer(ctx context.Context, sel ast.SelectionSet, o
 			if out.Values[i] == graphql.Null {
 				invalid = true
 			}
+		case "profile":
+			wg.Add(1)
+			go func(i int, field graphql.CollectedField) {
+				out.Values[i] = ec._Viewer_profile(ctx, field, obj)
+				if out.Values[i] == graphql.Null {
+					invalid = true
+				}
+				wg.Done()
+			}(i, field)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-
+	wg.Wait()
 	if invalid {
 		return graphql.Null
 	}
@@ -1180,6 +1202,29 @@ func (ec *executionContext) _Viewer_token(ctx context.Context, field graphql.Col
 	res := resTmp.(string)
 	rctx.Result = res
 	return graphql.MarshalString(res)
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _Viewer_profile(ctx context.Context, field graphql.CollectedField, obj *Viewer) graphql.Marshaler {
+	rctx := &graphql.ResolverContext{
+		Object: "Viewer",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
+		return ec.resolvers.Viewer().Profile(ctx, obj)
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(Profile)
+	rctx.Result = res
+
+	return ec._Profile(ctx, field.Selections, &res)
 }
 
 var __DirectiveImplementors = []string{"__Directive"}
@@ -2616,6 +2661,7 @@ type Viewer {
   id: ID!
   username: String!
   token: String!
+  profile: Profile!
 }
 
 type Profile {

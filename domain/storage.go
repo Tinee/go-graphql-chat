@@ -18,4 +18,5 @@ type MessageRepository interface {
 
 type ProfileRepository interface {
 	Create(Profile) (Profile, error)
+	Find(string) (*Profile, error)
 }
