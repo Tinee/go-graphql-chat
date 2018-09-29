@@ -8,14 +8,14 @@ import (
 	"github.com/99designs/gqlgen/handler"
 	"github.com/Tinee/go-graphql-chat/graphql"
 	"github.com/Tinee/go-graphql-chat/inmemory"
+	"github.com/Tinee/go-graphql-chat/middleware"
 	"github.com/go-chi/chi"
-	"github.com/go-chi/chi/middleware"
+	chiMiddleware "github.com/go-chi/chi/middleware"
 	"github.com/gorilla/websocket"
 	"github.com/rs/cors"
 )
 
 func main() {
-	// fmt.Println(time.Now().)
 	var (
 		mux    = chi.NewMux()
 		inmem  = inmemory.NewClient()
@@ -31,8 +31,9 @@ func main() {
 	}
 	mux.Use(
 		cors.AllowAll().Handler,
-		middleware.RequestID,
-		middleware.Recoverer,
+		chiMiddleware.RequestID,
+		chiMiddleware.Recoverer,
+		middleware.TokenLifter,
 	)
 
 	r := graphql.New(ur, ms, p, secret)
