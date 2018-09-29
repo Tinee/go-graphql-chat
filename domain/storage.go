@@ -3,6 +3,7 @@ package domain
 type Storage interface {
 	UserRepository() UserRepository
 	MessageRepository() MessageRepository
+	ProfileRepository() ProfileRepository
 }
 
 type UserRepository interface {
@@ -13,4 +14,8 @@ type UserRepository interface {
 
 type MessageRepository interface {
 	Create(Message) (Message, error)
+}
+
+type ProfileRepository interface {
+	Create(Profile) (Profile, error)
 }
