@@ -64,6 +64,7 @@ func (r *mutationResolver) PostProfile(ctx context.Context, input NewProfile) (P
 		Age:       p.Age,
 		FirstName: p.FirstName,
 		LastName:  p.LastName,
+		UserID:    p.UserID,
 	}
 	return out, nil
 }
