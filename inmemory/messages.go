@@ -1,10 +1,15 @@
 package inmemory
 
 import (
+	"errors"
 	"sync"
 	"time"
 
 	"github.com/Tinee/go-graphql-chat/domain"
+)
+
+var (
+	ErrMessageNotFound = errors.New("message not found in memory")
 )
 
 type messagesInMemory struct {
@@ -21,4 +26,15 @@ func (m *messagesInMemory) Create(ms domain.Message) (domain.Message, error) {
 	m.mtx.Unlock()
 
 	return ms, nil
+}
+
+func (m *messagesInMemory) Find(id string) (*domain.Message, error) {
+	m.mtx.Lock()
+	defer m.mtx.Unlock()
+	for _, m := range m.messages {
+		if m.ID == id {
+			return &m, nil
+		}
+	}
+	return nil, ErrMessageNotFound
 }

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"math/rand"
 	"os"
+	"path/filepath"
 	"sync"
 	"time"
 
@@ -48,13 +49,18 @@ type mockData struct {
 }
 
 // FillWithMockData this is when I realized that it sucks to not having a database in development.
-func (c *Client) FillWithMockData() error {
-
-	f, err := os.Open("inmemory/mock_data.json")
-	var data mockData
+func (c *Client) FillWithMockData(path string) error {
+	abs, err := filepath.Abs(path)
 	if err != nil {
 		return err
 	}
+
+	f, err := os.Open(abs)
+	if err != nil {
+		return err
+	}
+
+	var data mockData
 	err = json.NewDecoder(f).Decode(&data)
 	if err != nil {
 		return err
@@ -63,10 +69,10 @@ func (c *Client) FillWithMockData() error {
 	for _, p := range data.Profiles {
 		c.p.profiles = append(c.p.profiles, p)
 	}
-
 	for _, u := range data.Users {
 		c.u.users = append(c.u.users, u)
 	}
+
 	return nil
 }
 

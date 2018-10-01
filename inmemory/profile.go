@@ -28,6 +28,23 @@ func (m *profileInMemory) Create(p domain.Profile) (domain.Profile, error) {
 	return p, nil
 }
 
+func (m *profileInMemory) FindMany(take int, offset int) []domain.Profile {
+	var res []domain.Profile
+	m.mtx.Lock()
+	defer m.mtx.Unlock()
+	if len(m.profiles) <= offset {
+		return res
+	}
+	for _, p := range m.profiles[offset:] {
+		res = append(res, p)
+
+		if len(res) == take {
+			break
+		}
+	}
+	return res
+}
+
 func (m *profileInMemory) Find(id string) (*domain.Profile, error) {
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
@@ -36,5 +53,5 @@ func (m *profileInMemory) Find(id string) (*domain.Profile, error) {
 			return &v, nil
 		}
 	}
-	return nil, ErrUserNotFound
+	return nil, ErrProfileNotFound
 }

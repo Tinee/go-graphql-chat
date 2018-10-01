@@ -14,9 +14,11 @@ type UserRepository interface {
 
 type MessageRepository interface {
 	Create(Message) (Message, error)
+	Find(string) (*Message, error)
 }
 
 type ProfileRepository interface {
 	Create(Profile) (Profile, error)
-	Find(string) (*Profile, error)
+	Find(id string) (*Profile, error)
+	FindMany(take int, offset int) []Profile
 }

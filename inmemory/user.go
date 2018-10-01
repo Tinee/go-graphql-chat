@@ -22,7 +22,7 @@ type userInMemory struct {
 	users []domain.User
 }
 
-func (uim *userInMemory) Create(u domain.User) (domain.User, error) {
+func (m *userInMemory) Create(u domain.User) (domain.User, error) {
 	bs, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.MinCost)
 	if err != nil {
 		return domain.User{}, ErrCreatingUser
@@ -32,24 +32,24 @@ func (uim *userInMemory) Create(u domain.User) (domain.User, error) {
 	u.ID = generateID()
 	u.CreatedAt = time.Now()
 
-	uim.mtx.Lock()
-	defer uim.mtx.Unlock()
+	m.mtx.Lock()
+	defer m.mtx.Unlock()
 	// if user exists bail.
-	for _, v := range uim.users {
+	for _, v := range m.users {
 		if v.Username == u.Username {
 			return domain.User{}, ErrUserExists
 		}
 	}
-	uim.users = append(uim.users, u)
+	m.users = append(m.users, u)
 
 	return u, nil
 }
 
 // Find tries to find the user by ID.
-func (uim *userInMemory) Find(id string) (*domain.User, error) {
-	uim.mtx.Lock()
-	defer uim.mtx.Unlock()
-	for _, v := range uim.users {
+func (m *userInMemory) Find(id string) (*domain.User, error) {
+	m.mtx.Lock()
+	defer m.mtx.Unlock()
+	for _, v := range m.users {
 		if v.ID == id {
 			return &v, nil
 		}
@@ -57,10 +57,10 @@ func (uim *userInMemory) Find(id string) (*domain.User, error) {
 	return nil, ErrUserNotFound
 }
 
-func (uim *userInMemory) Authenticate(username, password string) (*domain.User, error) {
-	uim.mtx.Lock()
-	defer uim.mtx.Unlock()
-	for _, v := range uim.users {
+func (m *userInMemory) Authenticate(username, password string) (*domain.User, error) {
+	m.mtx.Lock()
+	defer m.mtx.Unlock()
+	for _, v := range m.users {
 		if v.Username == username {
 			err := bcrypt.CompareHashAndPassword([]byte(v.Password), []byte(password))
 			if err != nil {
