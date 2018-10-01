@@ -64,7 +64,8 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		Me func(childComplexity int) int
+		Me      func(childComplexity int) int
+		Friends func(childComplexity int, take int, offset int) int
 	}
 
 	Subscription struct {
@@ -87,6 +88,7 @@ type MutationResolver interface {
 }
 type QueryResolver interface {
 	Me(ctx context.Context) (Viewer, error)
+	Friends(ctx context.Context, take int, offset int) ([]Profile, error)
 }
 type SubscriptionResolver interface {
 	MessageAdded(ctx context.Context, id string) (<-chan Message, error)
@@ -151,6 +153,30 @@ func field_Mutation_postProfile_args(rawArgs map[string]interface{}) (map[string
 		}
 	}
 	args["input"] = arg0
+	return args, nil
+
+}
+
+func field_Query_friends_args(rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	args := map[string]interface{}{}
+	var arg0 int
+	if tmp, ok := rawArgs["take"]; ok {
+		var err error
+		arg0, err = graphql.UnmarshalInt(tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["take"] = arg0
+	var arg1 int
+	if tmp, ok := rawArgs["offset"]; ok {
+		var err error
+		arg1, err = graphql.UnmarshalInt(tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["offset"] = arg1
 	return args, nil
 
 }
@@ -345,6 +371,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.Me(childComplexity), true
+
+	case "Query.friends":
+		if e.complexity.Query.Friends == nil {
+			break
+		}
+
+		args, err := field_Query_friends_args(rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Friends(childComplexity, args["take"].(int), args["offset"].(int)), true
 
 	case "Subscription.messageAdded":
 		if e.complexity.Subscription.MessageAdded == nil {
@@ -947,6 +985,15 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				}
 				wg.Done()
 			}(i, field)
+		case "friends":
+			wg.Add(1)
+			go func(i int, field graphql.CollectedField) {
+				out.Values[i] = ec._Query_friends(ctx, field)
+				if out.Values[i] == graphql.Null {
+					invalid = true
+				}
+				wg.Done()
+			}(i, field)
 		case "__type":
 			out.Values[i] = ec._Query___type(ctx, field)
 		case "__schema":
@@ -983,6 +1030,67 @@ func (ec *executionContext) _Query_me(ctx context.Context, field graphql.Collect
 	rctx.Result = res
 
 	return ec._Viewer(ctx, field.Selections, &res)
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _Query_friends(ctx context.Context, field graphql.CollectedField) graphql.Marshaler {
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := field_Query_friends_args(rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx := &graphql.ResolverContext{
+		Object: "Query",
+		Args:   args,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, nil, func(ctx context.Context) (interface{}, error) {
+		return ec.resolvers.Query().Friends(ctx, args["take"].(int), args["offset"].(int))
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]Profile)
+	rctx.Result = res
+
+	arr1 := make(graphql.Array, len(res))
+	var wg sync.WaitGroup
+
+	isLen1 := len(res) == 1
+	if !isLen1 {
+		wg.Add(len(res))
+	}
+
+	for idx1 := range res {
+		idx1 := idx1
+		rctx := &graphql.ResolverContext{
+			Index:  &idx1,
+			Result: &res[idx1],
+		}
+		ctx := graphql.WithResolverContext(ctx, rctx)
+		f := func(idx1 int) {
+			if !isLen1 {
+				defer wg.Done()
+			}
+			arr1[idx1] = func() graphql.Marshaler {
+
+				return ec._Profile(ctx, field.Selections, &res[idx1])
+			}()
+		}
+		if isLen1 {
+			f(idx1)
+		} else {
+			go f(idx1)
+		}
+
+	}
+	wg.Wait()
+	return arr1
 }
 
 // nolint: vetshadow
@@ -2644,6 +2752,7 @@ func (ec *executionContext) introspectType(name string) *introspection.Type {
 var parsedSchema = gqlparser.MustLoadSchema(
 	&ast.Source{Name: "schema.graphql", Input: `type Query {
   me: Viewer!
+  friends(take: Int!, offset: Int!): [Profile!]!
 }
 
 type Mutation {

@@ -25,7 +25,8 @@ func NewGraphQLHandlerFunc(
 	ms domain.MessageRepository,
 	p domain.ProfileRepository,
 	log *logrus.Logger,
-	secret string) http.HandlerFunc {
+	secret string,
+) http.HandlerFunc {
 
 	schema := NewExecutableSchema(Config{
 		Resolvers: &Resolver{

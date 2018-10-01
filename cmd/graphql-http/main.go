@@ -29,9 +29,9 @@ func main() {
 	log.Out = os.Stdout
 	log.SetFormatter(&logrus.JSONFormatter{})
 
-	err := inmem.FillWithMockData()
+	err := inmem.FillWithMockData("./inmemory/mock_data.json")
 	if err != nil {
-		fmt.Printf("Couldn't load the mock data: %v", err)
+		fmt.Printf("Couldn't load the mock data: %v \n", err)
 	}
 	mux.Use(
 		cors.AllowAll().Handler,

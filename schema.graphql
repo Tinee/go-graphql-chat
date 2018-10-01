@@ -1,5 +1,6 @@
 type Query {
   me: Viewer!
+  friends(take: Int!, offset: Int!): [Profile!]!
 }
 
 type Mutation {

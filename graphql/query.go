@@ -25,6 +25,22 @@ func (r *queryResolver) Me(ctx context.Context) (Viewer, error) {
 	return out, nil
 }
 
+func (r *queryResolver) Friends(ctx context.Context, take int, offset int) ([]Profile, error) {
+	ps := r.p.FindMany(take, offset)
+
+	var out []Profile
+	for _, p := range ps {
+		out = append(out, Profile{
+			Age:       p.Age,
+			FirstName: p.FirstName,
+			ID:        p.ID,
+			LastName:  p.LastName,
+			UserID:    p.UserID,
+		})
+	}
+	return out, nil
+}
+
 func (r *viewerResolver) Profile(ctx context.Context, v *Viewer) (Profile, error) {
 	p, err := r.p.Find(v.ID)
 	if err != nil {
