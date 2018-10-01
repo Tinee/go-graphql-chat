@@ -37,7 +37,7 @@ func main() {
 		cors.AllowAll().Handler,
 		chiMiddleware.RequestID,
 		chiMiddleware.Recoverer,
-		middleware.TokenLifter,
+		middleware.ExtractTokenToContext,
 	)
 
 	mux.Handle(

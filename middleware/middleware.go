@@ -12,9 +12,9 @@ type contextKey struct {
 	name string
 }
 
-// TokenLifter check if we have a Authorization Header with prefix Bearer
+// ExtractTokenToContext check if we have a Authorization Header with prefix Bearer
 // if that's the case it lifts it into the context.
-func TokenLifter(next http.Handler) http.Handler {
+func ExtractTokenToContext(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		token := r.Header.Get("Authorization")
 		token = strings.TrimPrefix(token, "Bearer ")
