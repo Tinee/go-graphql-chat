@@ -13,6 +13,7 @@ import (
 func Test_graphql_mutationResolver(t *testing.T) {
 	inmem := inmemory.NewClient()
 	err := inmem.FillWithMockData("../inmemory/mock_data.json")
+
 	if err != nil {
 		t.Fatal("Error: We need to have mock data inserted.")
 	}
